@@ -34,7 +34,7 @@ class Freenom(object):
         playload = {'token': token,
                     'username': login,
                     'password': password}
-        r = self.session.post(url, playload)
+        r = self.session.post(url, playload, headers={'Host':'my.freedom.com', 'Referer':'https://my.freedom.com/clientarea.php'})
         assert r, "couldn't get %s" % url
         return self.is_logged_in(r)
 
@@ -112,7 +112,10 @@ class Freenom(object):
         soup = BeautifulSoup(r.text, "html.parser")
         errs = soup.find_all(attrs={'class': 'dnserror'})
         if errs:
-            raise UpdateError([e.text for e in errs], record, records)
+            for e in errs:
+                if e.text != "There were no changes":
+                    raise UpdateError(e.text, record, records)
+#            raise UpdateError([e.text for e in errs], record, records)
         return len(soup.find_all(attrs={'class': 'dnssuccess'}))
 
     def remove_record(self, record, records=None):
